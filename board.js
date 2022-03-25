@@ -128,4 +128,42 @@ class Board {
             this.drawPiece(piece)
         }
     }
+
+    // identifies clicked square from click coordinates
+    getSquare(clickX, clickY){        
+
+        return {
+            x : Math.floor((clickX - this.offsetX)/this.sqr_width) + this.cornerX,
+            y : Math.floor((clickY - this.offsetY)/this.sqr_height) + this.cornerY
+        }
+    }
+
+    // updates board position
+    updateOffset(x, y){        
+
+        const {sqr_width, sqr_height} = this;
+
+        this.offsetX += x;        
+        this.offsetY += y;
+
+        if(this.offsetX < -1*sqr_width){
+            this.cornerX += 1;
+            this.offsetX = 0;                      
+        } 
+
+        if(this.offsetX > 0){
+            this.cornerX -= 1;
+            this.offsetX = -1*sqr_width;
+        } 
+
+        if(this.offsetY < -1*sqr_height){
+            this.cornerY += 1;
+            this.offsetY = 0;                      
+        } 
+
+        if(this.offsetY > 0){
+            this.cornerY -= 1;
+            this.offsetY = -1*sqr_height;
+        }         
+    }
 }
