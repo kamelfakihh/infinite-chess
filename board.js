@@ -51,6 +51,19 @@ class Board {
         );
     }
 
+    // similar to drawSquare(), but changes square height depending on the given ratio
+    // ratio is the value of remaing_time/max_time (between 0 and 1)
+    drawTimer(x, y, ratio){
+        let subtracted = this.sqr_height*ratio; // amount of pixels to remove from square
+        if( (x+y)%2==0 ){            
+            this.cx.fillStyle="#967051";
+            this.cx.fillRect((x - this.cornerX)*this.sqr_width + this.offsetX, (y-this.cornerY)*this.sqr_height + this.offsetY + subtracted, this.sqr_width, this.sqr_height - subtracted);
+        }else{                        
+            this.cx.fillStyle="#bfac8f";
+            this.cx.fillRect((x - this.cornerX)*this.sqr_width + this.offsetX, (y-this.cornerY)*this.sqr_height + this.offsetY + subtracted, this.sqr_width, this.sqr_height - subtracted);
+        }                                        
+    }
+
     // draw a piece on specified coordinates 
     drawPiece(piece){
 
@@ -125,6 +138,14 @@ class Board {
     drawPieces(pieces){
         
         for(let piece of pieces){        
+
+            // calculate time since last move
+            const now = Date.now();            
+            if(now < piece.last_move + piece.delay){                                                    
+                // draw timer behind piece
+                this.drawTimer(piece.x, piece.y, (now-piece.last_move)/piece.delay)
+            }
+            // draw actual piece
             this.drawPiece(piece)
         }
     }
