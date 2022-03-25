@@ -73,7 +73,7 @@ class Board {
         
         // viewport coordinates (translates between piece coordinates relative to the board and its coordinates relative to the viewport's corner)
         let vx = x-cornerX
-        let vy = y-cornerX
+        let vy = y-cornerY
         
         this.cx.drawImage(
             img,                            // source image
