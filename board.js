@@ -1,9 +1,21 @@
 class Board {
 
-    constructor(context, label, width, height, scale, cornerX, cornerY, hex_color1, hex_color2){
+    constructor(board_canvas, pieces_canvas, board_img_canvas, label, width, height, scale, cornerX, cornerY, hex_color1, hex_color2){
+
+        this.board_canvas = board_canvas;
+        this.board_canvas.width = width;
+        this.board_canvas.height = height;        
+
+        this.pieces_canvas = pieces_canvas;
+        this.pieces_canvas.width = width;
+        this.pieces_canvas.height = height;
+
+        this.board_img_canvas = board_img_canvas;
 
         // game canvas 2D context
-        this.cx = context;
+        this.board_context = this.board_canvas.getContext("2d");
+        this.pieces_context = this.pieces_canvas.getContext("2d");
+        this.board_img_context = this.board_img_canvas.getContext("2d");
 
         // game info text 
         this.label = label;
@@ -21,11 +33,11 @@ class Board {
 
         // square dimensions
         if(height > width){
-            this.sqr_height = width/this.scale;
-            this.sqr_width = width/this.scale;
+            this.sqr_height = Math.floor(width/this.scale);
+            this.sqr_width = Math.floor(width/this.scale);
         }else{
-            this.sqr_height = height/this.scale;
-            this.sqr_width = height/this.scale;
+            this.sqr_height = Math.floor(height/this.scale);
+            this.sqr_width = Math.floor(height/this.scale);
         }    
 
         // top left square coordinates
@@ -35,6 +47,17 @@ class Board {
         // top left square offset (distance between square edge and viewport edge)
         this.offsetX = 0;
         this.offsetY = 0;
+
+        // generate empty board image
+        this.generateBoard();
+    }
+
+    draw(pieces){
+        // this.board_context.clearRect(0, 0, this.width, this.height)
+        this.pieces_context.clearRect(0, 0, this.width, this.height);
+        this.drawBoard()
+        this.drawPieces(pieces)
+        this.updateLabel("")
     }
 
     // draws an empty square
@@ -42,8 +65,8 @@ class Board {
 
         const {sqr_width, sqr_height, offsetX, offsetY} = this;
 
-        this.cx.fillStyle=color;
-        this.cx.fillRect(
+        this.board_img_context.fillStyle=color;
+        this.board_img_context.fillRect(
             x*sqr_width  + offsetX,
             y*sqr_height + offsetY,
             sqr_width,
@@ -54,13 +77,13 @@ class Board {
     // similar to drawSquare(), but changes square height depending on the given ratio
     // ratio is the value of remaing_time/max_time (between 0 and 1)
     drawTimer(x, y, ratio){
-        let subtracted = this.sqr_height*ratio; // amount of pixels to remove from square
+        let subtracted = Math.floor(this.sqr_height*ratio); // amount of pixels to remove from square
         if( (x+y)%2==0 ){            
-            this.cx.fillStyle="#967051";
-            this.cx.fillRect((x - this.cornerX)*this.sqr_width + this.offsetX, (y-this.cornerY)*this.sqr_height + this.offsetY + subtracted, this.sqr_width, this.sqr_height - subtracted);
+            this.pieces_context.fillStyle="#967051";
+            this.pieces_context.fillRect((x - this.cornerX)*this.sqr_width + this.offsetX, (y-this.cornerY)*this.sqr_height + this.offsetY + subtracted, this.sqr_width, this.sqr_height - subtracted);
         }else{                        
-            this.cx.fillStyle="#bfac8f";
-            this.cx.fillRect((x - this.cornerX)*this.sqr_width + this.offsetX, (y-this.cornerY)*this.sqr_height + this.offsetY + subtracted, this.sqr_width, this.sqr_height - subtracted);
+            this.pieces_context.fillStyle="#bfac8f";
+            this.pieces_context.fillRect((x - this.cornerX)*this.sqr_width + this.offsetX, (y-this.cornerY)*this.sqr_height + this.offsetY + subtracted, this.sqr_width, this.sqr_height - subtracted);
         }                                        
     }
 
@@ -78,7 +101,7 @@ class Board {
         } = piece;
 
         // padding from square edges
-        let padding = 5;        
+        let padding = 6;        
 
         // image dimensions
         let img_width = img.width;
@@ -88,22 +111,34 @@ class Board {
         let vx = x-cornerX
         let vy = y-cornerY
         
-        this.cx.drawImage(
+        this.pieces_context.drawImage(
             img,                            // source image
             0, 0, img_width, img_height,    // source square
             vx*sqr_width + padding/2 + offsetX, vy*sqr_height + padding/2 + offsetY, sqr_width-padding, sqr_height-padding  // target square
         )   
-
     }
 
     // draw an empty board 
-    drawBoard(){
+    drawBoard(){        
+        this.board_context.drawImage(
+            this.board_img_canvas, 
+            this.cornerX %2 === 0 ? this.offsetX - this.sqr_width : this.offsetX, 
+            this.cornerY %2 === 0 ? this.offsetY - this.sqr_height : this.offsetY,
+            this.board_img_canvas.width, this.board_img_canvas.height,            
+        );                
+    }
+
+    // draws an empty board to the hidden canvas
+    generateBoard(){
 
         const {width, height, sqr_width, sqr_height, cornerX, cornerY, color1, color2} = this
 
         // number of square to fill screen in each dimensions
-        let nb_squares_x = Math.ceil(width/sqr_width)+1
-        let nb_squares_y = Math.ceil(height/sqr_height)+1
+        let nb_squares_x = Math.ceil(width/sqr_width)+2
+        let nb_squares_y = Math.ceil(height/sqr_height)+2
+
+        this.board_img_canvas.width = this.sqr_width*nb_squares_x;
+        this.board_img_canvas.height = this.sqr_height*nb_squares_y;
         
         // draw board
         for(let y=0; y <= nb_squares_y; y++){
@@ -137,12 +172,12 @@ class Board {
     // draws a list of pieces
     drawPieces(pieces){
         
-        for(let piece of pieces){        
+        for(let piece of pieces){                    
 
             // calculate time since last move
             const now = Date.now();            
-            if(now < piece.last_move + piece.delay){                                                    
-                // draw timer behind piece
+            if(now < piece.last_move + piece.delay){                                                   
+                // draw timer behind piece                
                 this.drawTimer(piece.x, piece.y, (now-piece.last_move)/piece.delay)
             }
             // draw actual piece
@@ -185,6 +220,6 @@ class Board {
         if(this.offsetY > 0){
             this.cornerY -= 1;
             this.offsetY = -1*sqr_height;
-        }         
+        }           
     }
 }
