@@ -6,8 +6,24 @@ html, body {
     display: block;  /* No floating content on sides */
 }
 
-#canvas {
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
     display: block;
+}
+
+#board_layer {
+    z-index: 0;            
+}
+
+#board_image {
+    z-index: 0;
+    display: hidden;
+}
+
+#pieces_layer {
+    z-index: 1;    
 }
 
 #label {
